@@ -124,6 +124,11 @@ table.pt td{border-bottom:1px solid var(--paper-line);padding:7px 8px 7px 0;vert
   [data-panel]:not(#p-kit){display:none!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.legend{background:var(--surface-2);border-radius:8px;padding:12px 14px;font-size:14px;margin-bottom:14px;max-width:80ch}
+.legend ul{margin:6px 0;padding-left:18px}
+.legend code{font-family:var(--mono);font-size:13px;background:var(--surface);padding:1px 5px;border-radius:4px;color:var(--ink)}
+.fhelp{font-size:12px;color:var(--ink-2);letter-spacing:0}
+.prev{font-size:12.5px;color:var(--ok);background:var(--ok-bg);border-radius:6px;padding:5px 8px;letter-spacing:0}
 </style>
 <header class="top">
   <div class="top-in">
@@ -181,6 +186,9 @@ table.pt td{border-bottom:1px solid var(--paper-line);padding:7px 8px 7px 0;vert
   </div><p class="hint" style="margin:8px 0 0">Les pièces s’appellent Pièce 1, Pièce 2… : tu les renommes dans <i>Noms et plan</i>. Le plan est dessiné automatiquement dans le kit.</p></div>
 
   <div class="block"><h2>L’affaire</h2>
+    <div class="legend"><b>Comment remplir :</b> écris une phrase normale. Là où un nom doit apparaître, mets le mot-clé entre accolades, il sera remplacé automatiquement.
+      <ul><li><code>{c}</code> = le nom du coupable (tiré au sort, tu n’as rien à faire)</li><li><code>{d}</code> = le nom de la personne qui découvre l’affaire</li><li><code>{cible}</code>, <code>{moyen}</code>, <code>{acces}</code>, <code>{trace}</code> = ce que tu as tapé dans les cases du même nom juste en dessous</li></ul>
+      Sous chaque case, l’aperçu montre la phrase telle qu’elle sera imprimée. Si un modèle te convient, tu n’as rien à modifier.</div>
     <div class="grid-f">
       <label class="f">Type d’affaire<select id="g_inc" data-g="inc"></select></label>
       <label class="f">Nom de l’affaire<input id="g_incident_nom" data-g="incident_nom"></label>
@@ -521,7 +529,7 @@ function generate(){
       jours:Array.from({length:N},(_,i)=>dayName(i+1)),nb_phases:3,nb_coupables:k,annonce:G.annonce!=="non",logements_partages:shared,duree:D+" min d’enquête + 20 min de dénouement",
       intro:fill(G.intro||"",M)},
     lieux,personnages:P,
-    verite:{coupables:cul,roles_coupables:{moyen:cMoy,acces:cAcc,geste:cExe},mobile:fill(G.mobile,M),moyen:"{moyen}",moment:dayName(N)+", "+hx(fm(A))+", dans "+L(PS)+".",
+    verite:{coupables:cul,decouvreur:decouvreur,roles_coupables:{moyen:cMoy,acces:cAcc,geste:cExe},mobile:fill(G.mobile,M),moyen:"{moyen}",moment:dayName(N)+", "+hx(fm(A))+", dans "+L(PS)+".",
       suite:T(cExe)+" cache {acces} et un vêtement marqué par {trace} dans ses affaires ("+L(room[cExe])+").",notes:[]},
     evenements:E.map(e=>{const o=Object.assign({},e);delete o.k;return o;}),
     indices:IN.map(x=>{const o=Object.assign({},x);delete o.k;return o;}),
@@ -660,6 +668,18 @@ function fillGenForm(){
   pieceOptions();
   $$("[data-g]").forEach(el=>{if(el.tagName==="SELECT"&&/^p[A-Z]/.test(el.dataset.g))return;el.value=G[el.dataset.g]??"";});
   $("#seedOut").textContent=G.seed;}
+const HELP={acte:"Ce que fait vraiment le coupable. Visible seulement sur sa fiche.",decouverte:"Ce que voit la personne qui découvre l’affaire. Visible par tous.",
+  obtention:"Comment le coupable se procure le moyen. Visible seulement sur sa fiche.",obtention_public:"Ce qu’un témoin aperçoit à ce moment-là, sans comprendre.",
+  rapport:"Le rapport lu par les enquêteurs : quand, comment, avec quoi.",mobile:"Pourquoi le coupable a agi. Révélé au dénouement.",
+  mobile_doc:"Un papier retrouvé qui trahit ce mobile.",mobile_scene:"Une phrase ou un geste du coupable, en public, qui met la puce à l’oreille.",
+  complicite:"Seulement s’il y a plusieurs coupables : ce que le cerveau a promis aux complices.",intro:"Le texte lu à tous au début de la partie."};
+function prevName(f){const V=S.verite||{},rc=V.roles_coupables||{};
+  const c=["acte"].includes(f)?rc.geste:(f==="complicite"||f.startsWith("mobile")||f.startsWith("obtention"))?rc.moyen:rc.geste;return{c:c,d:V.decouvreur};}
+function initHelp(){Object.keys(HELP).forEach(f=>{const el=$("#g_"+f);if(!el||el.dataset.help)return;el.dataset.help="1";
+  const h=document.createElement("span");h.className="fhelp";h.textContent=HELP[f];el.parentNode.insertBefore(h,el);
+  const pv=document.createElement("span");pv.className="prev";pv.id="pv_"+f;el.parentNode.appendChild(pv);});}
+function renderPreviews(){if(imported)return;reindex();Object.keys(HELP).forEach(f=>{const pv=$("#pv_"+f);if(!pv)return;const n=prevName(f);
+  const txt=String(G[f]||"").replace(/\{c\}/g,n.c?"{"+n.c+"}":"{c}").replace(/\{d\}/g,n.d?"{"+n.d+"}":"{d}");pv.textContent="Aperçu : "+cap(T(txt));});}
 function nbHint(){const s=S.meta;const sus=S.personnages.filter(p=>p.type==="joueur").length,d=S.personnages.filter(p=>p.type==="detective").length;
   $("#nbHint").textContent=sus+" suspects + "+d+" enquêteur(s), "+(s.nb_coupables||1)+" coupable(s), "+((s.jours||[]).length||1)+" jour(s). Minimum 5 suspects ; 2 coupables demandent au moins 5 suspects, 3 coupables au moins 6. Heure des faits entre 14:00 et 22:00."+(s.logements_partages?" Logements insuffisants : certains sont partagés.":"");}
 function regen(){if(imported)return;S=generate();reindex();}
@@ -755,9 +775,9 @@ $$(".tabs button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)
 $$("#kitNav button").forEach(b=>b.addEventListener("click",()=>{kitView=b.dataset.k;$$("#kitNav button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderKit();}));
 $("#printBtn").addEventListener("click",()=>{try{window.print();}catch(e){}});
 let tmr=null;
-function changed(){save();reindex();$("#scnTitle").textContent=cap(T(S.meta.titre||""))+(imported?" (importé)":"");nbHint();renderSpoil();clearTimeout(tmr);
+function changed(){save();reindex();renderPreviews();$("#scnTitle").textContent=cap(T(S.meta.titre||""))+(imported?" (importé)":"");nbHint();renderSpoil();clearTimeout(tmr);
   tmr=setTimeout(()=>{renderCheck();if(tab==="p-kit")renderKit();if(tab==="p-data")$("#json").value=JSON.stringify(S,null,2);},120);}
-fillGenForm();if(!imported)regen();changed();
+fillGenForm();initHelp();if(!imported)regen();changed();
 try{const t=localStorage.getItem(KEY+"_tab");if(t&&document.getElementById(t))show(t);}catch(e){}
 window.__mmp={validate,setG:o=>{Object.assign(G,o);imported=false;regen();return validate();},applyU:k=>{applyUnivers(G,k);},applyI:k=>{applyIncident(G,k);},get S(){return S;}};
 })();
