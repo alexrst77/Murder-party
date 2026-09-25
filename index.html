@@ -1,0 +1,764 @@
+<title>Moteur Murder Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F1EFF5; --surface:#FFFFFF; --surface-2:#E8E4EF; --line:#D6D0E0;
+  --ink:#1E1929; --ink-2:#5B5369; --accent:#4B2E83; --accent-ink:#FFFFFF;
+  --brass:#8C6A1F; --err:#B3261E; --err-bg:#FBE9E7; --warn:#8A5A00; --warn-bg:#FFF3D6; --ok:#2E7D4F; --ok-bg:#E3F3E9;
+  --paper:#FFFFFF; --paper-ink:#1B1624; --paper-2:#6A6078; --paper-line:#DDD6E6; --paper-accent:#4B2E83; --paper-brass:#8C6A1F;
+  --display:"Marcellus SC", "Cormorant SC", Georgia, serif;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15111D; --surface:#1F1A2A; --surface-2:#2A2338; --line:#3A3149;
+    --ink:#ECE6F5; --ink-2:#A89EB8; --accent:#A58BE0; --accent-ink:#15111D;
+    --brass:#D2A955; --err:#FF8A80; --err-bg:#3A1A1A; --warn:#F2C35B; --warn-bg:#35290F; --ok:#7FD39F; --ok-bg:#15301F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15111D; --surface:#1F1A2A; --surface-2:#2A2338; --line:#3A3149;
+  --ink:#ECE6F5; --ink-2:#A89EB8; --accent:#A58BE0; --accent-ink:#15111D;
+  --brass:#D2A955; --err:#FF8A80; --err-bg:#3A1A1A; --warn:#F2C35B; --warn-bg:#35290F; --ok:#7FD39F; --ok-bg:#15301F;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:var(--display);font-weight:400;font-size:24px;margin:0;letter-spacing:.02em;color:var(--accent)}
+.brand .scn{color:var(--ink-2);font-size:14px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs button{appearance:none;border:0;background:none;color:var(--ink-2);font:500 14px var(--sans);padding:9px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brass)}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill{font:500 11px var(--mono);padding:1px 7px;border-radius:99px}
+.pill.err{background:var(--err-bg);color:var(--err)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.ok{background:var(--ok-bg);color:var(--ok)}
+main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
+.panel{display:flex;flex-direction:column;gap:20px}
+.lead{max-width:70ch;color:var(--ink-2);margin:0}
+.lead code,.hint code{font-family:var(--mono);font-size:13px;background:var(--surface-2);padding:1px 5px;border-radius:4px;color:var(--ink)}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.block h2{font-family:var(--display);font-weight:400;font-size:19px;margin:0 0 12px;color:var(--ink)}
+.grid-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2);letter-spacing:.02em}
+input,select,textarea{font:14px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+textarea{font-family:var(--mono);font-size:12.5px;line-height:1.45;resize:vertical}
+.tbl-wrap{overflow-x:auto}
+table.edit{border-collapse:collapse;width:100%;min-width:760px}
+table.edit th{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);text-align:left;padding:6px 6px;border-bottom:1px solid var(--line)}
+table.edit td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.idc{font:12px var(--mono);color:var(--brass);white-space:nowrap}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px var(--sans);padding:8px 14px;border-radius:6px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:hover{border-color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hint{font-size:13px;color:var(--ink-2)}
+.issues{display:flex;flex-direction:column;gap:6px}
+.issue{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:6px;font-size:14px}
+.issue.err{background:var(--err-bg)} .issue.warn{background:var(--warn-bg)}
+.issue .k{font:500 11px var(--mono);padding-top:2px}
+.issue.err .k{color:var(--err)} .issue.warn .k{color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.stat b{display:block;font:500 22px var(--mono);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink-2)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.step{border-top:2px solid var(--brass);padding-top:10px}
+.step b{font-family:var(--display);font-weight:400;font-size:17px;display:block;margin-bottom:4px}
+.step p{margin:0;font-size:14px;color:var(--ink-2)}
+.subnav{display:flex;gap:6px;flex-wrap:wrap}
+.subnav button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font:500 13px var(--sans);padding:6px 12px;border-radius:99px;cursor:pointer}
+.subnav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.msg{font-size:13px;min-height:1.2em}
+.msg.ok{color:var(--ok)} .msg.err{color:var(--err)}
+
+/* ---- Feuilles imprimables : papier clair volontaire dans les deux thèmes ---- */
+.sheets{display:flex;flex-direction:column;gap:24px;align-items:center}
+.sheet{background:var(--paper);color:var(--paper-ink);width:100%;max-width:760px;padding:40px 44px;border-radius:4px;box-shadow:0 1px 3px rgba(20,10,40,.12),0 8px 24px rgba(20,10,40,.08);font-size:14px;line-height:1.55}
+.sheet .eyebrow{font:500 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-brass);display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--paper-line);padding-bottom:8px;margin-bottom:22px}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;margin:0 0 4px;color:var(--paper-accent);text-wrap:balance}
+.sheet h3{font-family:var(--display);font-weight:400;font-size:18px;margin:22px 0 8px;color:var(--paper-ink);border-bottom:1px solid var(--paper-line);padding-bottom:4px}
+.sheet .sub{color:var(--paper-2);margin:0 0 6px}
+.sheet p{margin:0 0 8px}
+.sheet ul{margin:0;padding-left:18px}
+.sheet li{margin-bottom:4px}
+.chrono{list-style:none;padding:0;margin:0}
+.chrono li{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:6px 0;border-bottom:1px dashed var(--paper-line)}
+.chrono .t{font:500 12.5px var(--mono);color:var(--paper-2);font-variant-numeric:tabular-nums}
+.chrono .l{font-size:12px;color:var(--paper-2)}
+.tag{display:inline-block;font:500 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:1px;border:1px solid var(--paper-line);color:var(--paper-2)}
+.tag.sec{border-color:#B3261E;color:#B3261E} .tag.mj{border-color:#4B2E83;color:#4B2E83}
+.secret{background:#F4EFFA;border-left:3px solid var(--paper-accent);padding:12px 14px;border-radius:0 4px 4px 0}
+.clue{border:1.5px solid var(--paper-ink);padding:18px 20px;border-radius:2px;margin-bottom:16px;break-inside:avoid}
+.clue .head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.clue .num{font:500 13px var(--mono);color:var(--paper-brass)}
+.clue h4{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.clue .ph{font:500 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--paper-2);margin:2px 0 10px}
+.clue .lim{font-style:italic;color:var(--paper-2);font-size:13px;margin-top:8px}
+.clue .foot{font:500 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-2);margin-top:12px;text-align:right}
+table.pt{border-collapse:collapse;width:100%;font-size:13.5px}
+table.pt th{text-align:left;font:500 10.5px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--paper-2);border-bottom:1px solid var(--paper-ink);padding:6px 8px 6px 0}
+table.pt td{border-bottom:1px solid var(--paper-line);padding:7px 8px 7px 0;vertical-align:top}
+.dots{border-bottom:1px dotted var(--paper-2);height:28px}
+.pt-wrap{overflow-x:auto}
+
+@media (max-width:560px){
+  .sheet{padding:26px 20px}
+  .chrono li{grid-template-columns:1fr;gap:2px}
+}
+@media print{
+  .top,.noprint{display:none!important}
+  body{background:#fff}
+  main{padding:0;max-width:none}
+  .sheets{gap:0;display:block}
+  .sheet{box-shadow:none;border-radius:0;max-width:none;padding:0 0 0 0;break-after:page;page-break-after:always}
+  .sheet:last-child{break-after:auto}
+  [data-panel]:not(#p-kit){display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><h1>Moteur Murder Party</h1><span class="scn" id="scnTitle"></span></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="p-gen" aria-selected="true">Générateur</button>
+      <button role="tab" data-tab="p-perso" aria-selected="false">Noms et plan</button>
+      <button role="tab" data-tab="p-check" aria-selected="false">Contrôle <span id="badge" class="pill"></span></button>
+      <button role="tab" data-tab="p-kit" aria-selected="false">Kit de jeu</button>
+      <button role="tab" data-tab="p-ia" aria-selected="false">Prompts IA</button>
+      <button role="tab" data-tab="p-data" aria-selected="false">Données JSON</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="panel" id="p-gen" data-panel>
+  <p class="lead">Tout se règle ici ; l’enquête complète se reconstruit à chaque changement, toujours cohérente. Commence par un univers et un type d’affaire, puis modifie n’importe quel champ. Dans les textes, <code>{cible}</code>, <code>{moyen}</code>, <code>{acces}</code>, <code>{trace}</code> reprennent les champs ; <code>{c}</code> désigne le coupable qui agit, <code>{d}</code> la personne qui découvre les faits.</p>
+
+  <div class="block"><h2>Univers</h2>
+    <div class="grid-f">
+      <label class="f">Modèle d’univers<select id="g_univ" data-g="univ"></select></label>
+      <label class="f">Nom du lieu<input id="g_lieu" data-g="lieu"></label>
+      <label class="f">Époque et ambiance<input id="g_epoque" data-g="epoque"></label>
+      <label class="f">Titre du jeu<input id="g_titre" data-g="titre"></label>
+      <label class="f">Nom du rôle qui garde l’accès<input id="g_gardien" data-g="gardien"></label>
+      <label class="f">Nom des enquêteurs<input id="g_enqLabel" data-g="enqLabel"></label>
+      <label class="f">Mot pour les logements<input id="g_logMot" data-g="logMot"></label>
+    </div>
+    <div class="grid-f" style="margin-top:12px">
+      <label class="f">Rôles des joueurs, un par ligne<textarea id="g_roles" rows="6" data-g="roles" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Activité collective de chaque jour, une par ligne<textarea id="g_activites" rows="6" data-g="activites" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Nom des jours, un par ligne<textarea id="g_jours" rows="6" data-g="jours" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Secrets anodins (joueurs sans fausse piste)<textarea id="g_secrets" rows="6" data-g="secrets" style="font-family:var(--sans)"></textarea></label>
+    </div>
+  </div>
+
+  <div class="block"><h2>Joueurs et durée</h2><div class="grid-f">
+    <label class="f">Nombre total de joueurs<input type="number" id="g_nb" min="5" max="30" data-g="nb"></label>
+    <label class="f">Dont enquêteurs<input type="number" id="g_enq" min="0" max="4" data-g="enq"></label>
+    <label class="f">Nombre de coupables<select id="g_nbc" data-g="nbc"><option value="1">1</option><option value="2">2 (complices)</option><option value="3">3 (complot)</option></select></label>
+    <label class="f">Annoncer le nombre de coupables<select id="g_annonce" data-g="annonce"><option value="oui">Oui, dans les règles</option><option value="non">Non, à découvrir</option></select></label>
+    <label class="f">Nombre de jours de l’histoire<input type="number" id="g_nbj" min="1" max="7" data-g="nbj"></label>
+    <label class="f">Heure des faits, dernier jour (HH:MM)<input id="g_hacte" data-g="hacte" placeholder="22:00"></label>
+    <label class="f">Durée de l’enquête jouée (min)<select id="g_duree" data-g="duree"><option>60</option><option>90</option><option>120</option><option>150</option><option>180</option></select></label>
+  </div><p class="hint" id="nbHint" style="margin:10px 0 0"></p></div>
+
+  <div class="block"><h2>Lieux</h2><div class="grid-f">
+    <label class="f">Nombre de pièces communes<input type="number" id="g_nbp" min="4" max="20" data-g="nbp"></label>
+    <label class="f">Nombre de logements<input type="number" id="g_nbl" min="1" max="30" data-g="nbl"></label>
+    <label class="f">Pièce des activités collectives<select id="g_pCommune" data-g="pCommune"></select></label>
+    <label class="f">Pièce où ont lieu les faits<select id="g_pScene" data-g="pScene"></select></label>
+    <label class="f">Pièce où est gardé l’accès<select id="g_pGardien" data-g="pGardien"></select></label>
+    <label class="f">Pièce où le moyen est obtenu<select id="g_pObt" data-g="pObt"></select></label>
+  </div><p class="hint" style="margin:8px 0 0">Les pièces s’appellent Pièce 1, Pièce 2… : tu les renommes dans <i>Noms et plan</i>. Le plan est dessiné automatiquement dans le kit.</p></div>
+
+  <div class="block"><h2>L’affaire</h2>
+    <div class="grid-f">
+      <label class="f">Type d’affaire<select id="g_inc" data-g="inc"></select></label>
+      <label class="f">Nom de l’affaire<input id="g_incident_nom" data-g="incident_nom"></label>
+      <label class="f">Cible (personne, objet, événement)<input id="g_cible" data-g="cible"></label>
+      <label class="f">Moyen utilisé<input id="g_moyen" data-g="moyen"></label>
+      <label class="f">Ce qui donne l’accès<input id="g_acces" data-g="acces"></label>
+      <label class="f">Trace laissée<input id="g_trace" data-g="trace"></label>
+      <label class="f">Titre du rapport d’expertise<input id="g_rapport_titre" data-g="rapport_titre"></label>
+    </div>
+    <div class="grid-f" style="margin-top:12px">
+      <label class="f">Le geste (secret du coupable)<textarea rows="3" id="g_acte" data-g="acte" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">La découverte (vue par {d})<textarea rows="3" id="g_decouverte" data-g="decouverte" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Obtention du moyen (secret)<textarea rows="3" id="g_obtention" data-g="obtention" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Ce qu’un témoin voit de l’obtention<textarea rows="3" id="g_obtention_public" data-g="obtention_public" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Rapport d’expertise ({h_acte} = heure des faits)<textarea rows="4" id="g_rapport" data-g="rapport" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Mobile<textarea rows="4" id="g_mobile" data-g="mobile" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Document qui trahit le mobile<textarea rows="4" id="g_mobile_doc" data-g="mobile_doc" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Scène publique qui trahit le mobile<textarea rows="4" id="g_mobile_scene" data-g="mobile_scene" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Pourquoi les complices aident ({c} = le cerveau)<textarea rows="3" id="g_complicite" data-g="complicite" style="font-family:var(--sans)"></textarea></label>
+      <label class="f">Introduction lue aux joueurs<textarea rows="3" id="g_intro" data-g="intro" style="font-family:var(--sans)"></textarea></label>
+    </div>
+  </div>
+
+  <div class="block"><h2>Tirage</h2>
+    <div class="row"><button class="btn primary" id="reroll">Nouveau tirage</button><span class="hint">Graine <b id="seedOut" class="idc"></b> : mêmes réglages + même graine = même partie. Le tirage change qui est coupable, les alibis et les fausses pistes.</span></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="spoilBtn" aria-pressed="false">Afficher la solution</button><button class="btn" id="resetAll">Tout remettre par défaut</button></div>
+    <div class="row" id="resetConfirm" hidden><span class="hint">Effacer tous tes réglages et prénoms ?</span><button class="btn primary" id="resetYes">Oui</button><button class="btn" id="resetNo">Annuler</button></div>
+    <div id="spoil" hidden style="margin-top:10px"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-perso" data-panel hidden>
+  <p class="lead">Mets les vrais prénoms et renomme les pièces. Ces noms restent quand tu changes les réglages ou refais un tirage.</p>
+  <div class="block"><h2>Joueurs</h2><div class="tbl-wrap"><table class="edit" id="namesTable"></table></div></div>
+  <div class="block"><h2>Pièces et logements</h2><div class="grid-f" id="lieuxForm"></div></div>
+  <div class="block"><h2>Plan</h2><div id="planPreview" class="tbl-wrap"></div></div>
+</section>
+
+<section class="panel" id="p-check" data-panel hidden>
+  <div class="stats" id="stats"></div>
+  <div class="row"><button class="btn primary" id="copyFix">Copier le prompt de correction</button><span class="msg" id="fixMsg"></span></div>
+  <div class="issues" id="issues"></div>
+  <p class="hint">Le contrôle vérifie la structure : heures, jours, présence simultanée dans deux lieux, balises inconnues, joueurs avec moins de deux faits, conclusions avec moins de deux appuis, fausses pistes sans résolution, logements partagés. Il ne juge pas le plaisir de jeu : fais relire les pièces par quelqu’un qui ignore la solution.</p>
+</section>
+
+<section class="panel" id="p-kit" data-panel hidden>
+  <div class="row noprint">
+    <div class="subnav" id="kitNav">
+      <button data-k="orga" aria-pressed="true">Organisateur</button>
+      <button data-k="regles" aria-pressed="false">Règles et plan</button>
+      <button data-k="fiches" aria-pressed="false">Fiches joueurs</button>
+      <button data-k="indices" aria-pressed="false">Indices</button>
+      <button data-k="bulletin" aria-pressed="false">Bulletin</button>
+      <button data-k="tout" aria-pressed="false">Tout</button>
+    </div>
+    <button class="btn" id="printBtn">Imprimer</button>
+  </div>
+  <p class="hint noprint">Pour imprimer, ouvre le fichier .html dans Safari ou Chrome, puis <i>Imprimer</i> : chaque fiche sort sur sa propre page.</p>
+  <div class="sheets" id="kit"></div>
+</section>
+
+<section class="panel" id="p-ia" data-panel hidden>
+  <p class="lead">Le générateur garantit la cohérence ; une IA peut ensuite habiller les textes. Elle doit répondre uniquement par un JSON, que tu colles dans <i>Données JSON</i>.</p>
+  <div class="block"><h2>Habiller le scénario actuel</h2>
+    <label class="f">Consigne de style<textarea id="adaptWish" rows="3" style="font-family:var(--sans)">Réécris tous les textes dans l’ambiance de l’univers, donne une vraie personnalité à chaque rôle, rends les secrets savoureux. Ne change ni les heures, ni les lieux, ni qui voit quoi.</textarea></label>
+    <textarea id="pAdapt" rows="7" readonly style="margin-top:10px"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn primary" data-copy="pAdapt">Copier</button><span class="msg" data-for="pAdapt"></span></div></div>
+  <div class="block"><h2>Créer un scénario totalement neuf</h2>
+    <textarea id="pCreate" rows="7" readonly></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn primary" data-copy="pCreate">Copier</button><span class="msg" data-for="pCreate"></span></div></div>
+  <div class="block"><h2>Corriger après contrôle</h2>
+    <textarea id="pFix" rows="5" readonly></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn primary" data-copy="pFix">Copier</button><span class="msg" data-for="pFix"></span></div></div>
+</section>
+
+<section class="panel" id="p-data" data-panel hidden>
+  <p class="lead">Le scénario complet. Colle ici le JSON renvoyé par une IA, ou copie-le pour le sauvegarder. Toucher un réglage du générateur régénère tout et remplace un scénario importé.</p>
+  <textarea id="json" rows="24" spellcheck="false"></textarea>
+  <div class="row">
+    <button class="btn primary" id="applyJson">Appliquer</button>
+    <button class="btn" id="copyJson">Copier</button>
+    <label class="btn" for="fileIn">Importer un fichier .json</label><input type="file" id="fileIn" accept=".json,application/json" hidden>
+    <button class="btn" id="resetGen">Revenir au générateur</button>
+    <span class="msg" id="jsonMsg"></span>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY="mmp_gen_v3";
+const J=(...l)=>l.join("\n");
+
+/* ================= MODÈLES ================= */
+const UNIVERS={
+  hotel:{label:"Hôtel contemporain",lieu:"Hôtel des Brumes",epoque:"Aujourd’hui, polar social",gardien:"Réceptionniste",enqLabel:"Enquêteur·rice",logMot:"Chambre",
+    roles:J("Client·e d’affaires","Écrivain·e","Médecin","Barman·aid","Cuisinier·ère","Voyageur·se","Photographe","Avocat·e","Architecte","Musicien·ne","Comptable","Jardinier·ère","Pilote","Antiquaire"),
+    activites:J("Dîner d’accueil","Soirée au bar","Dîner de gala"),jours:J("Vendredi","Samedi","Dimanche","Lundi","Mardi","Mercredi","Jeudi")},
+  bal:{label:"Bal des monstres",lieu:"Château de Grisemort",epoque:"Nuit d’Halloween, humour noir",gardien:"Maître·sse de cérémonie",enqLabel:"Inquisiteur·rice",logMot:"Crypte",
+    roles:J("Loup-garou","Momie","Sorcière","Fantôme","Zombie","Goule","Banshee","Gargouille","Créature recousue","Squelette","Faucheuse","Sirène des marais","Citrouille maudite","Vampire mondain·e","Poupée hantée","Nécromancien·ne"),
+    activites:J("Banquet d’ouverture","Danse macabre","Grand bal et proclamation"),jours:J("Première nuit","Deuxième nuit","Troisième nuit","Quatrième nuit","Cinquième nuit","Sixième nuit","Septième nuit")},
+  vampires:{label:"Académie des vampires",lieu:"Académie Nocturna",epoque:"Pensionnat gothique, rivalités de lignées",gardien:"Surveillant·e de nuit",enqLabel:"Membre du Conseil des Anciens",logMot:"Chambrée",
+    roles:J("Élève de première année","Élève de dernière année","Préfet·e","Professeur·e de potions","Professeur·e d’histoire du sang","Capitaine d’escrime","Héritier·ère d’une vieille lignée","Élève transféré·e","Bibliothécaire adjoint·e","Intendant·e","Choriste de la crypte","Délégué·e du conseil étudiant","Maître·sse d’armes","Infirmier·ère de l’académie"),
+    activites:J("Cours du soir","Festin nocturne","Cérémonie de la Lune"),jours:J("Nuit 1","Nuit 2","Nuit 3","Nuit 4","Nuit 5","Nuit 6","Nuit 7")},
+  manoir:{label:"Manoir années 1920",lieu:"Manoir de Kerlan",epoque:"1925, réception mondaine",gardien:"Majordome",enqLabel:"Inspecteur·rice",logMot:"Chambre",
+    roles:J("Colonel en retraite","Héritier·ère","Médecin de famille","Peintre","Notaire","Cuisinier·ère","Chauffeur","Veuve fortunée","Journaliste","Aviateur·rice","Pianiste","Diplomate","Cantatrice","Industriel·le"),
+    activites:J("Thé de bienvenue","Dîner aux chandelles","Bal masqué"),jours:J("Vendredi","Samedi","Dimanche","Lundi","Mardi","Mercredi","Jeudi")},
+  libre:{label:"Univers libre (vierge)",lieu:"Le Lieu",epoque:"À définir",gardien:"Gardien·ne",enqLabel:"Enquêteur·rice",logMot:"Logement",
+    roles:"",activites:J("Réunion du soir"),jours:J("Jour 1","Jour 2","Jour 3","Jour 4","Jour 5","Jour 6","Jour 7")}
+};
+const INCIDENTS={
+  election:{label:"Sabotage (élection, vote, concours)",titre:"Qui a truqué l’élection ?",incident_nom:"le sabotage de l’élection",cible:"l’urne de l’élection",moyen:"une liasse de faux bulletins",acces:"la clé de l’urne",trace:"des traces d’encre violette",rapport_titre:"Rapport du comité électoral",
+    acte:"{c} ouvre {cible} avec {acces} et remplace les vrais bulletins par {moyen}.",
+    decouverte:"Au dépouillement, {d} constate que {cible} contient des bulletins falsifiés.",
+    obtention:"{c} récupère {moyen}, imprimée en cachette.",obtention_public:"{c} revient avec un paquet soigneusement emballé.",
+    rapport:"Les faux bulletins ont été glissés dans {cible} après le dernier contrôle, vers {h_acte}. On relève {trace} sur la serrure et sur les faux bulletins. Aucune effraction : on a utilisé {acces}.",
+    mobile:"{c} voulait empêcher la victoire du ou de la favori·te, qui menaçait de révéler ses dettes.",
+    mobile_doc:"Brouillon de lettre : « Si le vote se passe normalement, je suis fini·e. Il faut que le résultat change. » L’écriture est celle de {c}.",
+    mobile_scene:"{c} s’emporte : « Cette élection est jouée d’avance, il faut que ça change ! »",
+    complicite:"{c} t’a promis une place d’honneur en échange de ton aide.",
+    intro:"Au dépouillement, la fraude éclate : quelqu’un a truqué l’élection. Vous étiez tous présents. À vous de trouver qui, comment et pourquoi."},
+  meurtre:{label:"Meurtre",titre:"Meurtre à minuit",incident_nom:"le meurtre de {cible}",cible:"Camille Varenne",moyen:"un coupe-papier en argent",acces:"le double de la clé de {cible}",trace:"des traces de cire rouge",rapport_titre:"Rapport du médecin légiste",
+    acte:"{c} entre avec {acces} et frappe {cible} avec {moyen}.",
+    decouverte:"{d} découvre {cible} sans vie.",
+    obtention:"{c} subtilise {moyen} dans une vitrine.",obtention_public:"{c} ressort en glissant quelque chose dans sa poche.",
+    rapport:"Mort survenue vers {h_acte}, causée par {moyen}. On relève {trace} sur la poignée. Pas d’effraction : la porte a été ouverte avec {acces}. Ni poison ni injection.",
+    mobile:"{cible} allait révéler que {c} avait détourné une grosse somme.",
+    mobile_doc:"Message de {cible} à {c} : « Je sais pour l’argent. Demain, tout le monde saura. »",
+    mobile_scene:"{c} a une altercation à voix basse avec {cible} : « Tu n’oserais pas. »",
+    complicite:"{c} t’a promis de rembourser toutes tes dettes.",
+    intro:"{cible} a été retrouvé·e sans vie. Vous étiez tous présents. À vous de trouver qui, comment et pourquoi."},
+  vol:{label:"Vol ou substitution d’objet",titre:"Le Grimoire disparu",incident_nom:"le vol de {cible}",cible:"le Grimoire de Sang",moyen:"une contrefaçon du grimoire",acces:"le code de la vitrine",trace:"de la poussière de craie noire",rapport_titre:"Rapport de l’expert en artefacts",
+    acte:"{c} ouvre la vitrine avec {acces} et remplace {cible} par {moyen}.",
+    decouverte:"{d} remarque que l’objet exposé n’est qu’une contrefaçon : {cible} a disparu.",
+    obtention:"{c} récupère {moyen} auprès d’un faussaire.",obtention_public:"{c} rapporte un objet lourd enveloppé dans un tissu.",
+    rapport:"L’objet exposé est une contrefaçon récente, posée vers {h_acte}. La vitrine a été ouverte avec {acces}, sans effraction. On relève {trace} sur la vitrine et sur la contrefaçon.",
+    mobile:"{c} voulait s’approprier le pouvoir de {cible}.",
+    mobile_doc:"Page de carnet : « Avec {cible}, plus personne ne me regardera de haut. » L’écriture est celle de {c}.",
+    mobile_scene:"{c} fixe longuement {cible} et murmure : « Il devrait m’appartenir. »",
+    complicite:"{c} t’a promis de partager le pouvoir de {cible}.",
+    intro:"{cible} a disparu, remplacé par une contrefaçon. Vous étiez tous présents. À vous de trouver qui, comment et pourquoi."},
+  poison:{label:"Empoisonnement non mortel",titre:"La coupe du Directeur",incident_nom:"l’empoisonnement de {cible}",cible:"le Directeur",moyen:"une potion de sommeil (fictive)",acces:"la clé du cellier privé",trace:"des cristaux bleus",rapport_titre:"Rapport du guérisseur",
+    acte:"{c} ouvre le cellier avec {acces} et verse {moyen} dans la carafe réservée à {cible}.",
+    decouverte:"{d} trouve {cible} plongé·e dans un sommeil impossible à rompre.",
+    obtention:"{c} se procure {moyen}.",obtention_public:"{c} revient en cachant un petit flacon.",
+    rapport:"{cible} a absorbé {moyen}, versée dans sa carafe personnelle vers {h_acte}. On relève {trace} au fond de la carafe. Le cellier a été ouvert avec {acces}. Aucune autre boisson n’est touchée.",
+    mobile:"{c} voulait écarter {cible} de la cérémonie pour prendre sa place.",
+    mobile_doc:"Lettre inachevée : « Tant que {cible} présidera, je resterai dans l’ombre. » L’écriture est celle de {c}.",
+    mobile_scene:"{c} lance devant tout le monde : « Certains devraient laisser la place ! »",
+    complicite:"{c} t’a promis un poste de confiance.",
+    intro:"{cible} est plongé·e dans un sommeil anormal. Vous étiez tous présents. À vous de trouver qui, comment et pourquoi."},
+  sabotage:{label:"Sabotage d’un spectacle ou d’un rituel",titre:"Le rituel saboté",incident_nom:"le sabotage du rituel",cible:"le Cercle de la Lune",moyen:"une bougie trafiquée",acces:"la clé de la sacristie",trace:"des traces de suif noir",rapport_titre:"Rapport du maître de rituel",
+    acte:"{c} entre avec {acces} et remplace la bougie centrale du {cible} par {moyen}.",
+    decouverte:"Au début de la cérémonie, {d} voit la bougie centrale s’éteindre et le {cible} se briser.",
+    obtention:"{c} fabrique {moyen} en secret.",obtention_public:"{c} sort avec les mains noircies.",
+    rapport:"La bougie centrale a été remplacée vers {h_acte} par {moyen}. La sacristie a été ouverte avec {acces}. On relève {trace} sur le chandelier.",
+    mobile:"{c} voulait que le rituel échoue pour discréditer celui ou celle qui le dirige.",
+    mobile_doc:"Billet froissé : « Si le rituel échoue, on me rendra enfin ma place. » L’écriture est celle de {c}.",
+    mobile_scene:"{c} ricane : « Ce rituel ne marchera jamais avec eux aux commandes. »",
+    complicite:"{c} t’a promis de te faire entrer dans le cercle.",
+    intro:"Le rituel a échoué : quelqu’un l’a saboté. Vous étiez tous présents. À vous de trouver qui, comment et pourquoi."}
+};
+const SECRETS_DEF=J("Tu es venu·e incognito pour un entretien que ton entourage ignore.","Tu as menti sur la raison de ta présence ici.","Tu as perdu une grosse somme au jeu la semaine dernière.","Tu écris des critiques anonymes et tu notes secrètement le lieu.","Tu as emprunté quelque chose de précieux sans prévenir son propriétaire.","Tu prépares une demande en mariage et tu repères les lieux.","Tu cherches à racheter le lieu en secret.","Tu fuis une réunion de famille à laquelle tu as dit ne pas pouvoir aller.","Tu as un faible pour quelqu’un de présent et tu n’oses pas le dire.","Tu tiens un journal intime où tu notes tout ce que disent les autres.");
+const DEF={univ:"hotel",inc:"meurtre",nb:12,enq:2,nbc:"1",annonce:"oui",nbj:2,hacte:"22:00",duree:"120",nbp:6,nbl:10,pCommune:"r1",pScene:"r2",pGardien:"r3",pObt:"r4",secrets:SECRETS_DEF,seed:4711,noms:{},lieuxNoms:{}};
+function applyUnivers(G,k){const u=UNIVERS[k];["lieu","epoque","gardien","enqLabel","logMot","roles","activites","jours"].forEach(f=>G[f]=u[f]);}
+function applyIncident(G,k){const u=INCIDENTS[k];Object.keys(u).forEach(f=>{if(f!=="label")G[f]=u[f];});}
+
+/* ================= ÉTAT ================= */
+let G,S,imported=false;
+function freshG(){const g=Object.assign({},DEF,{noms:{},lieuxNoms:{}});applyUnivers(g,g.univ);applyIncident(g,g.inc);return g;}
+try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.G){G=Object.assign(freshG(),r.G);if(r.imported&&r.S){S=r.S;imported=true;}}}catch(e){}
+if(!G)G=freshG();
+function save(){try{localStorage.setItem(KEY,JSON.stringify({G,S:imported?S:null,imported}));}catch(e){}}
+
+/* ================= OUTILS ================= */
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function tm(h){const m=/^(\d{1,2}):(\d{2})$/.exec(String(h||"").trim());return m?(+m[1])*60+(+m[2]):NaN;}
+const fm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const hx=h=>String(h||"").replace(":","h");
+const lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
+
+/* ================= GÉNÉRATEUR ================= */
+function generate(){
+  const r=rng(G.seed);
+  const enq=Math.max(0,Math.min(4,+G.enq||0));
+  const nb=Math.max(5+enq,Math.min(30,+G.nb||12));
+  const nSus=nb-enq;
+  const k=Math.max(1,Math.min(3,+G.nbc||1,nSus-3));
+  const N=Math.max(1,Math.min(7,+G.nbj||1));
+  let A=tm(G.hacte); if(isNaN(A))A=22*60; A=Math.max(14*60,Math.min(22*60,A));
+  const nbp=Math.max(4,Math.min(20,+G.nbp||6)), nbl=Math.max(1,Math.min(30,+G.nbl||8));
+  // lieux
+  const lieux=[];
+  for(let i=1;i<=nbp;i++)lieux.push({id:"r"+i,nom:"Pièce "+i,type:"piece"});
+  for(let i=1;i<=nbl;i++)lieux.push({id:"l"+i,nom:(G.logMot||"Logement")+" "+i,type:"logement"});
+  lieux.forEach(l=>{if(G.lieuxNoms[l.id])l.nom=G.lieuxNoms[l.id];});
+  const okP=id=>/^r\d+$/.test(id)&&+id.slice(1)<=nbp;
+  const PC=okP(G.pCommune)?G.pCommune:"r1", PS=okP(G.pScene)?G.pScene:"r2", PG=okP(G.pGardien)?G.pGardien:"r3", PO=okP(G.pObt)?G.pObt:"r4";
+  lieux.forEach(l=>{l.fonctions=[];if(l.id===PC)l.fonctions.push("activités");if(l.id===PS)l.fonctions.push("lieu des faits");if(l.id===PG)l.fonctions.push("accès gardé");if(l.id===PO)l.fonctions.push("obtention du moyen");});
+  const L=id=>"{"+id+"}";
+  // joueurs
+  const ids=Array.from({length:nSus},(_,i)=>"p"+(i+1));
+  const order=shuffle(ids,r);
+  const cul=order.slice(0,k), inn=order.slice(k);
+  const [gardien,decouvreur]=inn;
+  const cMoy=cul[0], cAcc=k===3?cul[1]:cul[0], cExe=cul[k-1];
+  const T=id=>"{"+id+"}";
+  const fill=(s,map)=>String(s||"").replace(/\{(c|d|g)\}/g,(m,x)=>map[x]||m);
+  // logements
+  const room={}; let shared=false;
+  ids.forEach((id,i)=>{let n=i+1;if(n>nbl){shared=true;n=((n-1)%nbl)+1;}room[id]="l"+n;});
+  // rôles
+  const roleList=shuffle(lines(G.roles),r); let ri=0;
+  const roleOf={}; ids.forEach(id=>{roleOf[id]=id===gardien?(G.gardien||"Gardien·ne"):(roleList[ri++]||"Invité·e");});
+  const days=lines(G.jours), acts=lines(G.activites);
+  const dayName=d=>days[d-1]||("Jour "+d);
+  // événements
+  const E=[]; const ev=(key,j,h,lieu,a,w,vis,txt)=>E.push({k:key,jour:j,heure:typeof h==="number"?fm(h):h,lieu,acteurs:a.filter(Boolean),temoins:(w||[]).filter(Boolean),visibilite:vis||"public",texte:txt});
+  const pool=shuffle(inn.filter(x=>x!==gardien&&x!==decouvreur),r);
+  const pk=(i,fb)=>pool[i%Math.max(1,pool.length)]||fb;
+  const wExit=pk(0,decouvreur), wAcc=pk(1,decouvreur), wMob=[pk(2,gardien),pk(3,decouvreur)], wObt=pk(4,gardien);
+  // activités quotidiennes
+  const everyone=ids.slice();
+  for(let d=1;d<=N;d++){ev("act"+d,d,A-120,PC,everyone,[],"public",(acts[(d-1)%Math.max(1,acts.length)]||"Réunion")+" : tout le monde est réuni.");}
+  // croisements du matin
+  for(let d=1;d<=N;d++){const sh=shuffle(everyone,r);const rooms=lieux.filter(l=>l.type==="piece"&&l.id!==PS).map(l=>l.id);
+    for(let i=0;i<sh.length;i+=2){const a=sh[i],b=sh[i+1]; if(!b){ev("cr"+d+"_"+i,d,11*60+30,room[a],[a],[],"public",T(a)+" passe la fin de matinée dans son logement.");continue;}
+      const lr=rooms[Math.floor(r()*rooms.length)]; ev("cr"+d+"_"+i,d,11*60+30,lr,[a,b],[],"public",T(a)+" et "+T(b)+" passent un moment ensemble et discutent de la suite du séjour.");}}
+  // mobile
+  const M={c:T(cMoy),d:T(decouvreur),g:T(gardien)};
+  ev("mobileScene",1,A-90,PC,[cMoy],wMob.filter(x=>x!==cMoy),"public",fill(G.mobile_scene,M));
+  // obtention
+  const dObt=Math.min(2,N);
+  ev("obtS",dObt,10*60,PO,[cMoy],[],"secret",fill(G.obtention,M));
+  ev("obtP",dObt,10*60,PO,[cMoy],[wObt],"public",fill(G.obtention_public,M));
+  // accès
+  const MA={c:T(cAcc),d:T(decouvreur),g:T(gardien)};
+  ev("accP",N,A-60,PG,[cAcc,gardien],[wAcc],"public",T(cAcc)+" demande de l’aide à "+T(gardien)+", qui s’absente un instant.");
+  ev("accS",N,A-60,PG,[cAcc],[],"secret","Pendant l’absence de "+T(gardien)+", "+T(cAcc)+" prend {acces}.");
+  if(cAcc!==cExe)ev("remise",N,A-40,room[cExe],[cAcc,cExe],[],"secret",T(cAcc)+" remet discrètement {acces} à "+T(cExe)+".");
+  // fausse piste : passage près de la scène juste avant
+  const herrings=["seul","dette","fioles","dispute","identite","menace"];
+  const hInn=shuffle(inn.filter(x=>x!==gardien&&x!==decouvreur&&x!==wExit),r);
+  const H={}; hInn.forEach((id,i)=>{if(i<herrings.length)H[herrings[i]]=id;});
+  if(H.seul){ev("seulAvant",N,A-20,PS,[H.seul],[gardien],"public",T(H.seul)+" passe dans "+L(PS)+" récupérer un objet oublié, puis repart.");}
+  if(H.dispute)ev("dispute",1,A-75,PC,[H.dispute],[wMob[0]!==H.dispute?wMob[0]:gardien],"public",T(H.dispute)+" critique violemment {cible} devant tout le monde.");
+  // l’acte
+  const ME={c:T(cExe),d:T(decouvreur),g:T(gardien)};
+  ev("acte",N,A,PS,[cExe],[],"secret",fill(G.acte,ME));
+  // groupes d’alibi
+  const grp=shuffle(everyone.filter(x=>x!==cExe&&x!==H.seul),r);
+  const alibiRooms=shuffle(lieux.filter(l=>l.id!==PS).map(l=>l.id),r);
+  const alibiOf={}; let gi=0;
+  for(let i=0;i<grp.length;){const rem=grp.length-i; const size=rem<=3?rem:(rem===4?2:3); const g=grp.slice(i,i+size); i+=size;
+    const lr=alibiRooms[gi%alibiRooms.length]; const key="alibi"+gi; gi++;
+    g.forEach(x=>alibiOf[x]=key);
+    ev(key,N,A,lr,g,[],"public",g.length===1?T(g[0])+" est seul·e à ce moment-là.":g.map(T).join(", ").replace(/, ([^,]*)$/," et $1")+" passent ce moment ensemble, sans se quitter.");}
+  if(H.seul)ev("seulPendant",N,A,room[H.seul],[H.seul],[],"public",T(H.seul)+" est seul·e dans son logement, sans témoin.");
+  ev("sortie",N,A+10,PS,[cExe],[wExit],"public",T(wExit)+" aperçoit "+T(cExe)+" sortir de "+L(PS)+".");
+  ev("cache",N,A+20,room[cExe],[cExe],[],"secret",T(cExe)+" cache {acces} et un vêtement marqué par {trace} dans ses affaires.");
+  ev("constat",N,A+60,PG,[gardien],[],"public",T(gardien)+" constate que {acces} a disparu.");
+  ev("decouverte",N,A+90,PS,[decouvreur],[gardien],"public",fill(G.decouverte,ME));
+  E.sort((a,b)=>(a.jour*1440+tm(a.heure))-(b.jour*1440+tm(b.heure)));
+  const EK={}; E.forEach((e,i)=>{e.id="e"+String(i+1).padStart(2,"0");EK[e.k]=e.id;});
+  // indices
+  const IN=[]; const ind=(key,ph,env,titre,texte,limite)=>IN.push({k:key,phase:ph,enveloppe:env,titre,texte,limite});
+  if(H.dette)ind("dette",1,"Affaires de "+T(H.dette),"Reconnaissance de dette",T(H.dette)+" reconnaît devoir une très grosse somme, à rembourser au plus vite. Annotation : « Après ce séjour, tout ira mieux. »","Un intérêt possible, pas une preuve.");
+  if(H.fioles)ind("fioles",1,"Affaires de "+T(H.fioles),"Fioles suspectes","Trois petites fioles sans étiquette trouvées dans les affaires de "+T(H.fioles)+".","Leur contenu reste à établir.");
+  if(H.identite)ind("identite",1,"Affaires de "+T(H.identite),"Coupure de presse","Article ancien : une personne recherchée sous un autre nom, photo floue ressemblant à "+T(H.identite)+".","Rien ne relie cette affaire à {incident_nom}.");
+  if(H.menace)ind("menace",1,"Affaires de "+T(H.menace),"Lettre de menace","Lettre ancienne signée "+T(H.menace)+" : « Tu regretteras ce que tu m’as pris. » Datée d’il y a plusieurs années.","Ancienne ; aucun lien matériel avec les faits.");
+  ind("mobileDoc",2,"Remis par les enquêteurs","Document compromettant",fill(G.mobile_doc,M),"Montre un mobile, pas le geste.");
+  ind("registre",2,L(PG),"Registre de "+L(PG),"{acces} était en place à "+hx(fm(A-90))+" et a disparu à "+hx(fm(A+60))+".\nMain courante de "+T(gardien)+" : « "+hx(fm(A-60))+" : "+T(cAcc)+" me demande de l’aide ; je m’absente un instant. »","Personne n’a vu prendre {acces}.");
+  ind("rapport",2,"Remis par les enquêteurs",G.rapport_titre||"Rapport d’expertise",G.rapport||"","Établi pour le jeu ; aucune technique réelle.");
+  ind("recu",3,"Remis par les enquêteurs","Pièce du fournisseur","{moyen} a été remis·e à "+T(cMoy)+" ("+dayName(dObt)+", vers 10h). Identité vérifiée.","Prouve l’obtention, pas à elle seule le geste.");
+  ind("inventaire",3,"Logement de "+T(cExe),"Inventaire de "+L(room[cExe]),"Dans les affaires de "+T(cExe)+" : {acces}, et un vêtement marqué par {trace}.",shared?"Logement partagé : vérifier à qui appartiennent les affaires.":"Tous les logements ont été inspectés.");
+  ind("inventaireGeneral",3,"Remis par les enquêteurs","Inspection des autres logements","Aucune trace de {trace} ni de {acces} dans les autres logements inspectés.","");
+  if(k>1){let t="Billet non signé trouvé chez "+T(cExe)+" : « À "+hx(fm(A-40))+", tu auras ce qu’il faut. Ensuite, c’est à toi. »";
+    if(cAcc!==cExe)t+="\nL’écriture correspond à celle de "+T(cAcc)+" (main courante, registre).";
+    if(k===3)t+="\nAu dos, une autre écriture, celle de "+T(cMoy)+" : « Ne me déçois pas. »";
+    ind("complicite",3,"Logement de "+T(cExe),"Billet de complices",t,"");}
+  if(H.fioles)ind("fiolesJ",3,"Remis par les enquêteurs","Analyse des fioles","Les fioles de "+T(H.fioles)+" contiennent un traitement personnel sans rapport avec {moyen}.","");
+  if(H.identite)ind("identiteJ",3,"Remis par les enquêteurs","Réponse des archives",T(H.identite)+" a changé de nom légalement il y a des années ; l’ancienne affaire a été classée.","");
+  const IK={}; IN.forEach((x,i)=>{x.id="I"+String(i+1).padStart(2,"0");IK[x.k]=x.id;});
+  const ref=key=>IK[key]||EK[key];
+  // conclusions
+  const C=[{id:"C1",texte:"{incident_nom} a eu lieu le "+dayName(N)+" vers "+hx(fm(A))+", dans "+L(PS)+".",appuis:["rapport","decouverte","sortie"]},
+    {id:"C2",texte:T(cExe)+" a commis le geste.",appuis:["sortie","inventaire","inventaireGeneral"]},
+    {id:"C3",texte:T(cAcc)+" a obtenu {acces}.",appuis:["registre","accP"]},
+    {id:"C4",texte:T(cMoy)+" s’est procuré {moyen}.",appuis:["recu","obtP"]},
+    {id:"C5",texte:"Mobile : "+fill(G.mobile,M),appuis:["mobileDoc","mobileScene"]}];
+  if(k>1)C.push({id:"C6",texte:"Les coupables ont agi ensemble : "+cul.map(T).join(", ")+".",appuis:["complicite","registre","sortie"]});
+  const F=[]; const fp=(c,s,x,res)=>F.push({id:"F"+(F.length+1),cible:c,soupcon:s,explication:x,resolution:res.filter(Boolean)});
+  fp(gardien,"Garde {acces} : aurait pu agir sans laisser de trace.","S’est absenté·e à la demande de "+T(cAcc)+" et a un alibi au moment des faits.",["registre",alibiOf[gardien]]);
+  fp(decouvreur,"A découvert les faits : c’est bien pratique.","Était ailleurs, avec d’autres, au moment des faits.",[alibiOf[decouvreur],"rapport"]);
+  if(H.seul)fp(H.seul,"Vu·e dans "+L(PS)+" juste avant les faits, puis seul·e sans témoin.","Passage avant l’heure des faits ; aucune trace chez lui ou elle.",["rapport","inventaireGeneral"]);
+  if(H.dette)fp(H.dette,"De lourdes dettes : un intérêt à {incident_nom} ?","Mobile possible, mais alibi au moment des faits.",["dette",alibiOf[H.dette]]);
+  if(H.fioles)fp(H.fioles,"Des fioles sans étiquette dans ses affaires.","Traitement personnel sans lien avec {moyen}.",["fioles","fiolesJ","rapport"]);
+  if(H.dispute)fp(H.dispute,"A critiqué {cible} en public.","Colère réelle, mais alibi au moment des faits.",["dispute",alibiOf[H.dispute]]);
+  if(H.identite)fp(H.identite,"Vit sous un autre nom.","Changement de nom légal, affaire classée.",["identite","identiteJ",alibiOf[H.identite]]);
+  if(H.menace)fp(H.menace,"Une ancienne lettre de menace.","Lettre ancienne ; alibi au moment des faits.",["menace",alibiOf[H.menace]]);
+  // personnages
+  const exSec=shuffle(lines(G.secrets),r);let si=0;
+  const P=ids.map(id=>{
+    const p={id,type:"joueur",role:roleOf[id],metier:"",chambre:room[id],secret:"",objectifs:[],infos:[]};
+    const mate=(E.find(e=>e.k===alibiOf[id])||{acteurs:[]}).acteurs.filter(x=>x!==id);
+    if(cul.includes(id)){
+      const tasks=[];if(id===cMoy)tasks.push("tu t’es procuré {moyen}");if(id===cAcc)tasks.push("tu as pris {acces}");if(id===cExe)tasks.push("tu as commis le geste");
+      const others=cul.filter(x=>x!==id);
+      p.secret="Tu es coupable : "+tasks.join(", ")+"."+(others.length?" Tes complices : "+others.map(T).join(", ")+".":"")+" "+(id===cMoy?"Ton mobile : "+fill(G.mobile,M):"Pourquoi : "+fill(G.complicite,M))+" Ces faits sont protégés jusqu’au dénouement : tu peux te taire, jamais les nier ni inventer un alibi.";
+      p.objectifs=["Partager tes observations vraies.","Repérer quelles preuves t’accusent vraiment ; tu peux relever un raisonnement fragile, sans mentir."];
+      if(others.length)p.objectifs.push("Ne jamais dénoncer tes complices, sans jamais mentir pour les couvrir.");
+      if(id===cExe)p.infos.push("Au moment des faits, tu n’as aucun alibi : si on te le demande, garde ton secret, n’invente rien.");
+    } else {
+      const h=Object.keys(H).find(x=>H[x]===id);
+      const HS={seul:"Juste avant les faits, tu es allé·e dans "+L(PS)+" reprendre une lettre personnelle compromettante. Tu n’as rien fait d’autre.",
+        dette:"Tu es criblé·e de dettes, et l’affaire pourrait t’arranger. Tu n’y es pour rien.",
+        fioles:"Tu suis un traitement personnel discret et tu caches tes fioles. Elles n’ont rien à voir avec l’affaire.",
+        dispute:"Tu as un vieux compte à régler avec {cible}, mais tu n’aurais jamais agi.",
+        identite:"Tu vis sous un nom d’emprunt, légalement, pour fuir un passé encombrant.",
+        menace:"Il y a des années, tu as écrit une lettre de menace que tu regrettes."};
+      if(id===gardien)p.secret="Tu as quitté ton poste plusieurs fois, ce qui t’est interdit. Tu n’as pas vu qui a pris {acces} et tu ne dois pas prétendre le savoir.";
+      else if(id===decouvreur)p.secret=(exSec[si++%Math.max(1,exSec.length)]||"")+" Tu crains d’être soupçonné·e parce que tu as découvert les faits.";
+      else p.secret=h?HS[h]:(exSec[si++%Math.max(1,exSec.length)]||"Aucun secret particulier.");
+      p.objectifs=[mate.length?"Faire confirmer ton alibi du moment des faits par "+mate.map(T).join(" ou ")+".":"Expliquer où tu étais au moment des faits sans rien inventer.",
+        id===gardien?"Distinguer la disparition de {acces} de l’identité supposée du voleur.":id===wExit?"Faire connaître ce que tu as vu à "+hx(fm(A+10))+", sans en tirer de conclusion hâtive.":id===wObt?"Faire connaître ce que tu as vu le "+dayName(dObt)+" vers 10h.":["Comprendre d’où vient {moyen}.","Savoir qui avait accès à {acces}.","Établir l’heure exacte des faits.","Démasquer le mobile."][Math.floor(r()*4)]];
+    }
+    p.nom=G.noms[id]||("Joueur "+id.slice(1)); p.num=+id.slice(1); return p;});
+  for(let i=1;i<=enq;i++){const n=nSus+i;P.push({id:"d"+i,num:n,nom:G.noms["d"+i]||("Joueur "+n),type:"detective",role:G.enqLabel||"Enquêteur·rice",metier:"",chambre:"",
+    secret:["Une enquête passée a été fragilisée par une accusation trop rapide.","Tu préfères les preuves matérielles aux témoignages.","Tu connais vaguement l’un des suspects, sans lien avec l’affaire.","Tu dois cette mission à une faveur que tu préfères taire."][(i-1)%4],
+    objectifs:[["Construire une chronologie publique au tableau.","Veiller à ce que chacun accède aux pièces.","Distinguer témoignage indépendant et répétition.","Recueillir les bulletins et exiger trois appuis."][(i-1)%4],"Faire parler chaque joueur au moins une fois."],
+    infos:[i===1?"Tu lis à voix haute les pièces de phase 2.":i===2?"Tu lis à voix haute les pièces de phase 3.":"Tu aides à tenir la chronologie commune."]});}
+  const D=+G.duree||120,t=x=>Math.round(D*x/5)*5;
+  const s={meta:{titre:G.titre||"Murder party",sous_titre:nb+" joueurs"+(enq?" dont "+enq+" "+(G.enqLabel||"enquêteurs"):"")+" • "+N+" jour"+(N>1?"s":"")+" • "+(k>1?k+" coupables":"1 coupable"),
+      etablissement:G.lieu||"",epoque:G.epoque||"",lieu:G.lieu||"",cible:G.cible||"",moyen:G.moyen||"",acces:G.acces||"",trace:G.trace||"",incident_nom:G.incident_nom||"l’affaire",h_acte:hx(fm(A)),
+      jours:Array.from({length:N},(_,i)=>dayName(i+1)),nb_phases:3,nb_coupables:k,annonce:G.annonce!=="non",logements_partages:shared,duree:D+" min d’enquête + 20 min de dénouement",
+      intro:fill(G.intro||"",M)},
+    lieux,personnages:P,
+    verite:{coupables:cul,roles_coupables:{moyen:cMoy,acces:cAcc,geste:cExe},mobile:fill(G.mobile,M),moyen:"{moyen}",moment:dayName(N)+", "+hx(fm(A))+", dans "+L(PS)+".",
+      suite:T(cExe)+" cache {acces} et un vêtement marqué par {trace} dans ses affaires ("+L(room[cExe])+").",notes:[]},
+    evenements:E.map(e=>{const o=Object.assign({},e);delete o.k;return o;}),
+    indices:IN.map(x=>{const o=Object.assign({},x);delete o.k;return o;}),
+    conclusions:C.map(c=>Object.assign({},c,{appuis:c.appuis.map(ref).filter(Boolean)})),
+    fausses_pistes:F.map(f=>Object.assign({},f,{resolution:f.resolution.map(ref).filter(Boolean)})),
+    deroule:[{temps:"Avant",action:"Imprimer, découper les pièces, les ranger par phase. Distribuer les fiches en privé ; 10 minutes de lecture."},
+      {temps:"0–10 min",action:"Lire les règles et l’introduction. Chacun se présente avec son rôle public uniquement."},
+      {temps:"10–"+t(1.5)+" min",action:"Phase 1 : pièces de phase 1. Interrogatoires, chronologie commune au tableau, plan affiché."},
+      {temps:t(1.5)+" min",action:"Phase 2 : lecture des pièces de phase 2."},
+      {temps:t(1.5)+"–"+t(2.75)+" min",action:"Confronter alibis du moment des faits, accès et mobile."},
+      {temps:t(2.75)+" min",action:"Phase 3 : pièces de phase 3 (inventaires, fournisseur, justificatifs)."},
+      {temps:t(2.75)+"–"+t(4.25)+" min",action:"Mise en commun et hypothèses."},
+      {temps:t(4.25)+"–"+D+" min",action:"Chacun remplit son bulletin, coupables compris."},
+      {temps:D+"–"+(D+20)+" min",action:"Dépouillement, révélation de la vérité et des secrets."}],
+    relances:["Qui n’a aucun alibi à "+hx(fm(A))+" le "+dayName(N)+" ?","Qui avait {acces} entre les mains, et quand a-t-il disparu ?","D’où vient {moyen}, et où a-t-on retrouvé {trace} ?"].concat(k>1?["Un seul joueur pouvait-il tout faire ? Relisez le billet."]:[]),
+    regles:[{titre:"Pas de mensonge",texte:"Aucune affirmation fausse : ni faux alibi, ni horaire inventé. Une hypothèse se dit « Je suppose… ». Si ta fiche ne dit rien : « Je ne sais pas »."},
+      {titre:"Faits et secrets",texte:"La partie A de ta fiche se raconte honnêtement dès qu’on te questionne. La partie B est un secret : tu peux le taire jusqu’au dénouement, jamais le nier. Formule commune : « Je garde mon secret pour le dénouement. » Un silence n’est pas une preuve."},
+      {titre:"Les coupables",texte:G.annonce!=="non"?(k>1?"Il y a "+k+" coupables, qui ont agi ensemble.":"Il y a un seul coupable."):"Le nombre de coupables est inconnu : un, ou plusieurs."},
+      {titre:"Les preuves",texte:"Ne cache, ne modifie et ne détruis aucun indice. Ne montre pas ta fiche : raconte-la. Utilise le plan pour situer chaque déplacement."},
+      {titre:"Rythme et verdict",texte:"Respecte les enveloppes fermées et les annonces de phase. Note toujours la source d’un fait. Chacun remet un bulletin écrit avant la révélation. Les coupables jouent selon les mêmes règles."}],
+    bulletin:{questions:[k>1||G.annonce==="non"?"Coupable(s) proposé(s)":"Coupable proposé","Qui a fait quoi (moyen, accès, geste)","Moment et lieu des faits","Mobile","Trois appuis précis (pièce ou témoin)","Une fausse piste écartée, et pourquoi"],
+      bareme:"Coupable(s) 3 pts • répartition des rôles 2 • moment et lieu 1 • mobile 2 • trois appuis 2. Total : 10."}};
+  return s;
+}
+
+/* ================= RENDU ================= */
+let P={},L={},E={},I={};
+function reindex(){P={};L={};E={};I={};S.personnages.forEach(p=>P[p.id]=p);S.lieux.forEach(l=>L[l.id]=l);S.evenements.forEach(e=>E[e.id]=e);S.indices.forEach(i=>I[i.id]=i);}
+function resolve(k){if(P[k])return P[k].nom;if(L[k])return L[k].nom;const v=S.meta[k];if(typeof v==="string"||typeof v==="number")return String(v);return null;}
+function T(s,d){d=d||0;return String(s==null?"":s).replace(/\{([\w-]+)\}/g,(m,k)=>{const r=resolve(k);if(r==null)return"⟦"+k+"⟧";return d<3?T(r,d+1):r;});}
+const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const H=s=>esc(cap(T(s))).replace(/\n/g,"<br>");
+const day=j=>(S.meta.jours&&S.meta.jours[j-1])||("Jour "+j);
+const evKey=e=>(e.jour||1)*1440+(tm(e.heure)||0);
+const sortedEv=()=>S.evenements.slice().sort((a,b)=>evKey(a)-evKey(b));
+const pname=id=>T(P[id]?.nom||id);
+function refLabel(id){if(I[id])return id+" · "+T(I[id].titre);if(E[id]){const e=E[id],x=cap(T(e.texte));return day(e.jour)+" "+hx(e.heure)+" · "+x.slice(0,64)+(x.length>64?"…":"");}if(P[id])return pname(id);return"⟦"+id+"⟧";}
+const coupables=()=>S.verite.coupables||(S.verite.coupable?[S.verite.coupable]:[]);
+
+function validate(){
+  reindex();const err=[],warn=[],add=(a,k,m)=>a.push({k,m});
+  const seen={};[].concat(S.personnages,S.lieux,S.evenements,S.indices,S.conclusions||[],S.fausses_pistes||[]).forEach(o=>{const id=o&&o.id;if(!id)add(err,"ID","Élément sans identifiant.");else if(seen[id])add(err,"ID","Identifiant en double : "+id);seen[id]=1;});
+  (function walk(o,p){if(typeof o==="string"){(o.match(/\{([\w-]+)\}/g)||[]).forEach(t=>{if(resolve(t.slice(1,-1))==null)add(err,"BALISE","Balise inconnue "+t+" dans "+p);});}
+    else if(Array.isArray(o))o.forEach((x,i)=>walk(x,p+"["+i+"]"));else if(o&&typeof o==="object")Object.keys(o).forEach(k=>walk(o[k],p?p+"."+k:k));})(S,"");
+  const cs=coupables();if(!cs.length)add(err,"VÉRITÉ","Aucun coupable défini.");cs.forEach(c=>{if(!P[c])add(err,"VÉRITÉ","Coupable introuvable : "+c);});
+  const nj=(S.meta.jours||[]).length||1;const slot={};
+  S.evenements.forEach(e=>{const m=tm(e.heure);
+    if(isNaN(m))add(err,"HEURE","Heure invalide dans "+e.id+" (format HH:MM).");
+    if(!(e.jour>=1&&e.jour<=nj))add(err,"JOUR","Jour "+e.jour+" hors de 1–"+nj+" dans "+e.id);
+    if(!L[e.lieu])add(err,"LIEU","Lieu inconnu « "+e.lieu+" » dans "+e.id);
+    (e.acteurs||[]).concat(e.temoins||[]).forEach(id=>{if(!P[id])add(err,"PERSO","Personnage inconnu « "+id+" » dans "+e.id);});
+    (e.acteurs||[]).forEach(a=>{const k=a+"@"+evKey(e);if(slot[k]&&slot[k].lieu!==e.lieu)add(err,"UBIQUITÉ",pname(a)+" est dans deux lieux le "+day(e.jour)+" à "+hx(e.heure)+" ("+slot[k].id+", "+e.id+").");else slot[k]=e;});});
+  const players=S.personnages.filter(p=>p.type==="joueur"),dets=S.personnages.filter(p=>p.type==="detective");
+  players.forEach(p=>{const n=S.evenements.filter(e=>e.visibilite==="public"&&((e.acteurs||[]).includes(p.id)||(e.temoins||[]).includes(p.id))).length;
+    if(n<2)add(warn,"JOUEUR",pname(p.id)+" n’a que "+n+" fait(s) partageable(s).");if(!p.secret)add(warn,"JOUEUR",pname(p.id)+" n’a pas de secret.");if((p.objectifs||[]).length<2)add(warn,"JOUEUR",pname(p.id)+" a moins de deux objectifs.");});
+  (S.conclusions||[]).forEach(c=>{(c.appuis||[]).forEach(r=>{if(!I[r]&&!E[r]&&!P[r])add(err,"PREUVES","Appui inconnu « "+r+" » dans "+c.id);});if((c.appuis||[]).length<2)add(err,"PREUVES",c.id+" repose sur moins de deux appuis.");});
+  (S.fausses_pistes||[]).forEach(f=>{if(!P[f.cible])add(err,"FAUSSE PISTE","Cible inconnue dans "+f.id);if(!(f.resolution||[]).length)add(err,"FAUSSE PISTE",f.id+" n’a rien pour la refermer.");(f.resolution||[]).forEach(r=>{if(!I[r]&&!E[r])add(err,"FAUSSE PISTE","Résolution inconnue « "+r+" » dans "+f.id);});});
+  const used=new Set();(S.conclusions||[]).forEach(c=>(c.appuis||[]).forEach(r=>used.add(r)));(S.fausses_pistes||[]).forEach(f=>(f.resolution||[]).forEach(r=>used.add(r)));
+  S.indices.forEach(i=>{if(!(i.phase>=1&&i.phase<=(+S.meta.nb_phases||3)))add(err,"INDICE",i.id+" : phase invalide.");if(!used.has(i.id))add(warn,"INDICE",i.id+" n’appuie aucune conclusion ni fausse piste.");});
+  if(S.meta.logements_partages)add(warn,"LOGEMENTS","Moins de logements que de joueurs : certains sont partagés.");
+  return{err,warn,stats:{joueurs:players.length,detectives:dets.length,coupables:cs.length,evenements:S.evenements.length,indices:S.indices.length,pistes:(S.fausses_pistes||[]).length}};
+}
+
+/* ---------- plan SVG ---------- */
+function planSVG(annot){reindex();
+  const pcs=S.lieux.filter(l=>l.type==="piece"||(!l.type&&!/^l\d/.test(l.id))), lgs=S.lieux.filter(l=>l.type==="logement");
+  const W=700,pad=16,cols=Math.min(4,Math.max(1,pcs.length)),cw=(W-pad*2)/cols,ch=78;
+  const rowsP=Math.ceil(pcs.length/cols);const corrY=pad+rowsP*ch+8,corrH=34;
+  const lcols=Math.min(8,Math.max(1,lgs.length)),lw=(W-pad*2)/lcols,lh=56,lrows=Math.ceil(lgs.length/lcols);
+  const Ht=corrY+corrH+8+lrows*lh+pad+(annot?22:0);
+  const txt=(x,y,s,sz,w,fill)=>'<text x="'+x+'" y="'+y+'" font-size="'+sz+'" font-weight="'+(w||400)+'" fill="'+(fill||"#1B1624")+'" text-anchor="middle" font-family="IBM Plex Sans, system-ui, sans-serif">'+esc(s)+'</text>';
+  const wrap=(s,n)=>{const w=String(s).split(" ");const out=[];let cur="";w.forEach(x=>{if((cur+" "+x).trim().length>n){if(cur)out.push(cur);cur=x;}else cur=(cur+" "+x).trim();});if(cur)out.push(cur);return out.slice(0,2);};
+  let g='<svg viewBox="0 0 '+W+' '+Ht+'" width="100%" style="max-width:'+W+'px;display:block" role="img" aria-label="Plan du lieu">';
+  g+='<rect x="0" y="0" width="'+W+'" height="'+Ht+'" fill="#FFFFFF"/>';
+  pcs.forEach((l,i)=>{const x=pad+(i%cols)*cw,y=pad+Math.floor(i/cols)*ch;const hot=annot&&(l.fonctions||[]).length;
+    g+='<rect x="'+(x+3)+'" y="'+(y+3)+'" width="'+(cw-6)+'" height="'+(ch-6)+'" fill="'+(annot&&(l.fonctions||[]).includes("lieu des faits")?"#F4E6E6":hot?"#F1ECF8":"#FAF8FC")+'" stroke="#1B1624" stroke-width="1.5"/>';
+    g+='<rect x="'+(x+cw/2-10)+'" y="'+(y+ch-4.5)+'" width="20" height="3" fill="#FFFFFF"/>';
+    const nm=wrap(T(l.nom),Math.floor(cw/8));nm.forEach((s,j)=>g+=txt(x+cw/2,y+30+j*16-(nm.length-1)*8,s,13,600));
+    if(annot&&(l.fonctions||[]).length)g+=txt(x+cw/2,y+ch-16,(l.fonctions||[]).join(" • "),10,500,"#8C6A1F");});
+  g+='<rect x="'+pad+'" y="'+corrY+'" width="'+(W-pad*2)+'" height="'+corrH+'" fill="#EDE8F3" stroke="#1B1624" stroke-width="1"/>'+txt(W/2,corrY+22,"Couloir",11,500,"#6A6078");
+  lgs.forEach((l,i)=>{const x=pad+(i%lcols)*lw,y=corrY+corrH+8+Math.floor(i/lcols)*lh;
+    g+='<rect x="'+(x+3)+'" y="'+(y+3)+'" width="'+(lw-6)+'" height="'+(lh-6)+'" fill="#FFFFFF" stroke="#1B1624" stroke-width="1"/>';
+    wrap(T(l.nom),Math.floor(lw/7)).forEach((s,j,a)=>g+=txt(x+lw/2,y+lh/2+4+j*13-(a.length-1)*6,s,11,500));
+    if(annot){const occ=S.personnages.filter(p=>p.chambre===l.id).map(p=>pname(p.id));if(occ.length)g+=txt(x+lw/2,y+lh-9,occ.join(", ").slice(0,Math.floor(lw/5)),8.5,400,"#6A6078");}});
+  if(annot)g+=txt(W/2,Ht-10,"Rose : lieu des faits • violet : pièces à fonction",10,400,"#6A6078");
+  return g+'</svg>';}
+
+const foot=()=>esc(T(S.meta.titre||""));
+function sheet(l,inner){return'<article class="sheet"><div class="eyebrow"><span>'+l+'</span><span>'+foot()+'</span></div>'+inner+'</article>';}
+function evLine(e,o){o=o||{};let tags="";
+  if(o.vis){if(e.visibilite==="secret")tags+='<span class="tag sec">secret</span>';if(e.visibilite==="mj")tags+='<span class="tag mj">MJ seul</span>';}
+  if(o.me&&(e.temoins||[]).includes(o.me)&&!(e.acteurs||[]).includes(o.me))tags+='<span class="tag">témoin</span>';
+  const w=o.wit&&(e.temoins||[]).length?'<div class="l">Témoins : '+esc(e.temoins.map(pname).join(", "))+'</div>':"";
+  const who=o.vis&&(e.acteurs||[]).length>3?"":"";
+  return'<li><span class="t">'+esc(day(e.jour))+'<br>'+esc(hx(e.heure))+'</span><div>'+H(e.texte)+tags+'<div class="l">'+esc(T(L[e.lieu]?.nom||e.lieu))+'</div>'+w+who+'</div></li>';}
+const logement=p=>p.chambre?T(L[p.chambre]?.nom||p.chambre):"—";
+function kOrga(){reindex();const V=S.verite,cs=coupables(),rc=V.roles_coupables||{};
+  let h='<h2>'+H(S.meta.titre)+'</h2><p class="sub">'+H(S.meta.sous_titre||"")+'</p><p class="sub">'+H(S.meta.lieu||"")+(S.meta.epoque?' • '+H(S.meta.epoque):"")+' • '+H(S.meta.duree||"")+'</p>';
+  h+='<h3>La vérité</h3><ul><li><b>Affaire :</b> '+H(S.meta.incident_nom||"")+' (cible : '+esc(T(S.meta.cible||""))+')</li><li><b>Coupable'+(cs.length>1?"s":"")+' :</b> '+esc(cs.map(pname).join(", "))+'</li>';
+  if(rc.moyen)h+='<li><b>Moyen obtenu par :</b> '+esc(pname(rc.moyen))+' • <b>accès pris par :</b> '+esc(pname(rc.acces))+' • <b>geste par :</b> '+esc(pname(rc.geste))+'</li>';
+  h+='<li><b>Mobile :</b> '+H(V.mobile)+'</li><li><b>Moyen :</b> '+H(V.moyen)+' ; accès : '+esc(T(S.meta.acces||""))+' ; trace : '+esc(T(S.meta.trace||""))+'</li><li><b>Quand et où :</b> '+H(V.moment)+'</li><li><b>Ensuite :</b> '+H(V.suite)+'</li></ul>';
+  h+='<h3>Distribution</h3><div class="pt-wrap"><table class="pt"><tr><th>Joueur</th><th>Rôle</th><th>Logement</th></tr>'+S.personnages.map(p=>'<tr><td>'+esc(pname(p.id))+(cs.includes(p.id)?' <span class="tag sec">coupable</span>':"")+'</td><td>'+H(p.role)+(p.metier?' • '+H(p.metier):"")+'</td><td>'+esc(logement(p))+'</td></tr>').join("")+'</table></div>';
+  let o=sheet("Organisateur • confidentiel",h);
+  o+=sheet("Organisateur • plan annoté",'<h2>Plan annoté</h2><p class="sub">'+H(S.meta.lieu||"")+'</p>'+planSVG(true));
+  o+=sheet("Organisateur • chronologie",'<h2>Chronologie de référence</h2><p class="sub">Toutes les fiches sont générées depuis cette liste.</p><ul class="chrono">'+sortedEv().map(e=>evLine(e,{vis:true,wit:true})).join("")+'</ul>');
+  let c='<h2>Carte des preuves</h2><div class="pt-wrap"><table class="pt"><tr><th>Conclusion</th><th>Appuis</th></tr>'+(S.conclusions||[]).map(x=>'<tr><td><b>'+esc(x.id)+'</b> '+H(x.texte)+'</td><td>'+(x.appuis||[]).map(r=>esc(refLabel(r))).join("<br>")+'</td></tr>').join("")+'</table></div>';
+  c+='<h3>Fausses pistes</h3><div class="pt-wrap"><table class="pt"><tr><th>Soupçon</th><th>Vraie explication</th><th>Se referme avec</th></tr>'+(S.fausses_pistes||[]).map(f=>'<tr><td><b>'+esc(pname(f.cible))+'</b> — '+H(f.soupcon)+'</td><td>'+H(f.explication)+'</td><td>'+(f.resolution||[]).map(r=>esc(refLabel(r))).join("<br>")+'</td></tr>').join("")+'</table></div>';
+  o+=sheet("Organisateur • preuves",c);
+  let d='<h2>Conduite de partie</h2><div class="pt-wrap"><table class="pt"><tr><th>Temps</th><th>Action</th></tr>'+(S.deroule||[]).map(x=>'<tr><td style="white-space:nowrap">'+H(x.temps)+'</td><td>'+H(x.action)+'</td></tr>').join("")+'</table></div><h3>Pièces par phase</h3><ul>';
+  for(let i=1;i<=(+S.meta.nb_phases||3);i++)d+='<li><b>Phase '+i+' :</b> '+S.indices.filter(x=>x.phase==i).map(x=>esc(x.id)+' '+H(x.titre)+' <span style="color:var(--paper-2)">('+H(x.enveloppe||"")+')</span>').join(" • ")+'</li>';
+  d+='</ul><h3>Relances (une à la fois, après 10 min sans progrès)</h3><ul>'+(S.relances||[]).map(x=>'<li>'+H(x)+'</li>').join("")+'</ul>';
+  return o+sheet("Organisateur • animation",d);}
+function kRegles(){return sheet("À distribuer • sans spoiler",'<h2>'+H(S.meta.titre)+'</h2><p class="sub">'+H(S.meta.lieu||"")+(S.meta.epoque?' • '+H(S.meta.epoque):"")+'</p><p>'+H(S.meta.intro||"")+'</p>'+(S.regles||[]).map((x,i)=>'<h3>'+(i+1)+'. '+H(x.titre)+'</h3><p>'+H(x.texte)+'</p>').join("")+'<p style="margin-top:18px;font-style:italic">Bonne chance !</p>')
+  +sheet("À distribuer • plan",'<h2>Plan de '+H(S.meta.lieu||"")+'</h2><p class="sub">À afficher ou à distribuer</p>'+planSVG(false));}
+function fiche(p){const pub=sortedEv().filter(e=>e.visibilite==="public"&&((e.acteurs||[]).includes(p.id)||(e.temoins||[]).includes(p.id)));const sec=sortedEv().filter(e=>e.visibilite==="secret"&&(e.acteurs||[]).includes(p.id));
+  let h='<h2>'+esc(pname(p.id))+'</h2><p class="sub">'+H(p.role)+(p.metier?' • '+H(p.metier):"")+(p.chambre?' • '+esc(logement(p)):"")+'</p>';
+  if(p.type==="detective")h+='<h3>Ta situation</h3><p>Tu arrives après les faits. Tu n’as assisté à rien : tu travailles avec les témoignages et les pièces.</p>'+((p.infos||[]).length?'<ul>'+p.infos.map(x=>'<li>'+H(x)+'</li>').join("")+'</ul>':"");
+  else h+='<h3>A • Ce que tu as vécu et vu</h3><p class="sub">À raconter honnêtement si on te questionne.</p><ul class="chrono">'+pub.map(e=>evLine(e,{me:p.id})).join("")+'</ul>'+((p.infos||[]).length?'<ul style="margin-top:10px">'+p.infos.map(x=>'<li>'+H(x)+'</li>').join("")+'</ul>':"");
+  h+='<h3>B • Ton secret</h3><div class="secret"><p>'+H(p.secret||"Aucun secret particulier.")+'</p>'+(sec.length?'<ul class="chrono">'+sec.map(e=>evLine(e)).join("")+'</ul>':"")+'</div>';
+  h+='<h3>Tes objectifs</h3><ul>'+(p.objectifs||[]).map(x=>'<li>'+H(x)+'</li>').join("")+'</ul><p style="margin-top:16px;font-size:12.5px;color:var(--paper-2)">Tu peux taire ton secret jusqu’au dénouement, jamais le nier. Pour une information absente de ta fiche : « Je ne sais pas », ou demande au maître du jeu.</p>';
+  return sheet("Fiche personnelle • ne pas montrer",h);}
+function kFiches(){reindex();return S.personnages.filter(p=>p.type!=="victime").map(fiche).join("");}
+function kIndices(){reindex();const c=S.indices.map(i=>'<div class="clue"><div class="head"><h4>'+H(i.titre)+'</h4><span class="num">'+esc(i.id)+'</span></div><div class="ph">Phase '+esc(i.phase)+' • '+H(i.enveloppe||"")+'</div><div>'+H(i.texte)+'</div>'+(i.limite?'<div class="lim">'+H(i.limite)+'</div>':"")+'<div class="foot">Accessoire fictif • '+H(S.meta.lieu||"")+'</div></div>');
+  let o="";for(let k=0;k<c.length;k+=3)o+=sheet("Pièces à découper • ouvrir à la phase indiquée",c.slice(k,k+3).join(""));return o;}
+function kBulletin(){const b=S.bulletin||{};return sheet("À photocopier • remise confidentielle",'<h2>Bulletin d’accusation</h2><p class="sub">'+H(S.meta.titre)+'</p><p><b>Ton nom :</b></p><div class="dots"></div>'+(b.questions||[]).map(q=>'<p style="margin-top:14px"><b>'+H(q)+' :</b></p><div class="dots"></div><div class="dots"></div>').join("")+'<p style="margin-top:18px;font-size:12.5px;color:var(--paper-2)">'+H(b.bareme||"")+'</p>');}
+let kitView="orga";
+function renderKit(){reindex();const m={orga:kOrga,regles:kRegles,fiches:kFiches,indices:kIndices,bulletin:kBulletin};$("#kit").innerHTML=kitView==="tout"?[kOrga(),kRegles(),kFiches(),kIndices(),kBulletin()].join(""):m[kitView]();}
+
+/* ================= UI GÉNÉRATEUR ================= */
+function pieceOptions(){const n=Math.max(4,Math.min(20,+G.nbp||6));const nm=i=>G.lieuxNoms["r"+i]||("Pièce "+i);
+  ["pCommune","pScene","pGardien","pObt"].forEach(f=>{const el=$("#g_"+f);el.innerHTML=Array.from({length:n},(_,i)=>'<option value="r'+(i+1)+'">'+esc(nm(i+1))+'</option>').join("");el.value=G[f];if(el.value!==G[f]){el.value="r1";}});}
+function fillGenForm(){
+  $("#g_univ").innerHTML=Object.keys(UNIVERS).map(k=>'<option value="'+k+'">'+esc(UNIVERS[k].label)+'</option>').join("");
+  $("#g_inc").innerHTML=Object.keys(INCIDENTS).map(k=>'<option value="'+k+'">'+esc(INCIDENTS[k].label)+'</option>').join("");
+  pieceOptions();
+  $$("[data-g]").forEach(el=>{if(el.tagName==="SELECT"&&/^p[A-Z]/.test(el.dataset.g))return;el.value=G[el.dataset.g]??"";});
+  $("#seedOut").textContent=G.seed;}
+function nbHint(){const s=S.meta;const sus=S.personnages.filter(p=>p.type==="joueur").length,d=S.personnages.filter(p=>p.type==="detective").length;
+  $("#nbHint").textContent=sus+" suspects + "+d+" enquêteur(s), "+(s.nb_coupables||1)+" coupable(s), "+((s.jours||[]).length||1)+" jour(s). Minimum 5 suspects ; 2 coupables demandent au moins 5 suspects, 3 coupables au moins 6. Heure des faits entre 14:00 et 22:00."+(s.logements_partages?" Logements insuffisants : certains sont partagés.":"");}
+function regen(){if(imported)return;S=generate();reindex();}
+document.addEventListener("input",ev=>{const t=ev.target;
+  if(t.dataset.g){const k=t.dataset.g;const v=t.value;
+    if(k==="univ"){G.univ=v;applyUnivers(G,v);fillGenForm();}
+    else if(k==="inc"){G.inc=v;applyIncident(G,v);fillGenForm();}
+    else G[k]=(["nb","enq","nbj","nbp","nbl"].includes(k))?(+v||0):v;
+    if(k==="nbp")pieceOptions();
+    imported=false;regen();changed();return;}
+  if(t.dataset.nom){const k=t.dataset.nom;if(t.value.trim())G.noms[k]=t.value.trim();else delete G.noms[k];regen();changed();return;}
+  if(t.dataset.lieu){const k=t.dataset.lieu;if(t.value.trim())G.lieuxNoms[k]=t.value.trim();else delete G.lieuxNoms[k];regen();changed();$("#planPreview").innerHTML=planSVG(false);pieceOptions();return;}
+  if(t.id==="adaptWish")renderPrompts();});
+$("#reroll").addEventListener("click",()=>{G.seed=Math.floor(Math.random()*99999)+1;imported=false;regen();fillGenForm();changed();});
+$("#spoilBtn").addEventListener("click",e=>{const on=e.currentTarget.getAttribute("aria-pressed")!=="true";e.currentTarget.setAttribute("aria-pressed",on);e.currentTarget.textContent=on?"Masquer la solution":"Afficher la solution";$("#spoil").hidden=!on;renderSpoil();});
+function renderSpoil(){if($("#spoil").hidden)return;reindex();const V=S.verite;$("#spoil").innerHTML='<p class="hint" style="margin:0"><b>Coupable(s) :</b> '+esc(coupables().map(id=>pname(id)+" ("+T(P[id]?.role||"")+")").join(", "))+' • <b>Mobile :</b> '+esc(cap(T(V.mobile)))+'</p>';}
+$("#resetAll").addEventListener("click",()=>{$("#resetConfirm").hidden=false;});
+$("#resetNo").addEventListener("click",()=>{$("#resetConfirm").hidden=true;});
+$("#resetYes").addEventListener("click",()=>{G=freshG();imported=false;$("#resetConfirm").hidden=true;fillGenForm();regen();changed();});
+
+function renderPerso(){reindex();
+  $("#namesTable").innerHTML='<tr><th>N°</th><th>Prénom</th><th>Rôle tiré au sort</th><th>Logement</th></tr>'+S.personnages.slice().sort((a,b)=>(a.num||0)-(b.num||0)).map(p=>'<tr><td class="idc">'+esc(p.num||"")+'</td><td><input id="n_'+esc(p.id)+'" data-nom="'+esc(p.id)+'" placeholder="Joueur '+esc(p.num||"")+'" value="'+esc(G.noms[p.id]||"")+'"'+(imported?" disabled":"")+'></td><td>'+esc(T(p.role))+'</td><td>'+esc(logement(p))+'</td></tr>').join("");
+  $("#lieuxForm").innerHTML=S.lieux.map(l=>'<label class="f"><span class="idc">'+esc(l.id)+((l.fonctions||[]).length?" • "+esc(l.fonctions.join(", ")):"")+'</span><input id="l_'+esc(l.id)+'" data-lieu="'+esc(l.id)+'" placeholder="'+esc(l.type==="logement"?(G.logMot||"Logement")+" "+l.id.slice(1):"Pièce "+l.id.slice(1))+'" value="'+esc(G.lieuxNoms[l.id]||"")+'"'+(imported?" disabled":"")+'></label>').join("");
+  $("#planPreview").innerHTML=planSVG(false);}
+
+function renderCheck(){const r=validate();const b=$("#badge");
+  if(r.err.length){b.className="pill err";b.textContent=r.err.length;}else if(r.warn.length){b.className="pill warn";b.textContent=r.warn.length;}else{b.className="pill ok";b.textContent="OK";}
+  const s=r.stats;$("#stats").innerHTML=[[r.err.length,"erreurs bloquantes"],[r.warn.length,"alertes"],[s.joueurs,"suspects"],[s.detectives,"enquêteurs"],[s.coupables,"coupables"],[s.evenements,"événements"],[s.indices,"indices"],[s.pistes,"fausses pistes"]].map(([n,l])=>'<div class="stat"><b>'+n+'</b><span>'+l+'</span></div>').join("");
+  $("#issues").innerHTML=(r.err.length+r.warn.length)?r.err.map(x=>'<div class="issue err"><span class="k">'+esc(x.k)+'</span><span>'+esc(x.m)+'</span></div>').join("")+r.warn.map(x=>'<div class="issue warn"><span class="k">'+esc(x.k)+'</span><span>'+esc(x.m)+'</span></div>').join(""):'<div class="issue" style="background:var(--ok-bg)"><span class="k" style="color:var(--ok)">OK</span><span>Aucun problème structurel détecté.</span></div>';return r;}
+
+const SCHEMA=`FORMAT JSON (mêmes clés que le scénario fourni) : meta{titre,lieu,epoque,cible,moyen,acces,trace,incident_nom,h_acte,jours[],nb_phases,nb_coupables,intro,...}, lieux[{id,nom,type:"piece|logement",fonctions[]}], personnages[{id,nom,type:"joueur|detective",role,chambre,secret,objectifs[],infos[]}], verite{coupables[],roles_coupables{moyen,acces,geste},mobile,moyen,moment,suite}, evenements[{id,jour:1..N,heure:"HH:MM",lieu,acteurs[],temoins[],visibilite:"public|secret|mj",texte}], indices[{id,titre,phase,enveloppe,texte,limite}], conclusions[{id,texte,appuis[]}], fausses_pistes[{id,cible,soupcon,explication,resolution[]}], deroule[], relances[], regles[], bulletin{questions[],bareme}.
+CONVENTIONS : personnages et lieux toujours écrits en balise {id} dans les textes ; champs meta utilisables en balise ({cible}, {moyen}, {acces}, {trace}, {incident_nom}, {lieu}). "public" = partie A des fiches des acteurs et témoins ; "secret" = partie B des acteurs ; "mj" = organisateur seul. Tout fait qu’un joueur doit connaître est un événement où il est acteur ou témoin, ou une ligne "infos". Personne n’est acteur dans deux lieux au même jour et à la même heure ; chaque conclusion a au moins deux appuis dont une pièce ; chaque fausse piste a de quoi être refermée ; aucun joueur, coupable compris, n’a besoin de mentir.`;
+function renderPrompts(){
+  $("#pAdapt").value=`Voici une murder party générée au format JSON. Habille-la selon cette consigne :
+« ${$("#adaptWish").value.trim()} »
+
+Garde exactement la même structure, les mêmes identifiants, jours, heures, lieux, acteurs, témoins, indices et appuis : seuls les textes (role, secret, objectifs, infos, texte des événements et des indices, titres, règles, intro) peuvent être réécrits. Garde les balises {id}. N’ajoute aucun fait qui changerait la solution.
+
+${SCHEMA}
+
+Réponds UNIQUEMENT par le JSON complet et valide, sans texte autour.
+
+SCÉNARIO :
+${JSON.stringify(S)}`;
+  $("#pCreate").value=`Crée une murder party originale en français.
+
+PARAMÈTRES
+Univers : ${G.lieu} — ${G.epoque}. Rôles possibles : ${lines(G.roles).join(", ")||"libres"}.
+Affaire : ${T(G.incident_nom||"")} (cible : ${G.cible}). Ce n’est pas forcément un meurtre : respecte ce type d’affaire.
+Joueurs : ${G.nb} au total dont ${G.enq} enquêteur(s) ; ids p1…pN pour les suspects, d1… pour les enquêteurs ; noms "Joueur 1"… ; ${G.nbc} coupable(s).
+Histoire sur ${G.nbj} jour(s) : ${lines(G.jours).slice(0,+G.nbj||1).join(", ")}.
+Lieux : ${G.nbp} pièces communes (ids r1…) et ${G.nbl} logements (ids l1…).
+Durée de jeu : ${G.duree} minutes.
+
+MÉTHODE : 1) écris la vérité (coupable(s), rôle de chacun, mobile, moyen fictif, accès, moment, dissimulation) ; 2) chronologie unique avec acteurs et témoins, sur tous les jours ; 3) donne un alibi vérifiable à la plupart des innocents au moment des faits ; 4) conclusions avec au moins deux appuis ; 5) indices à rebours sur 3 phases ; 6) chaque joueur : au moins 2 faits partageables, 1 secret, 2 objectifs ; 7) au moins 5 fausses pistes refermables ; 8) vérifie qu’un lecteur n’ayant que les pièces trouve les bons coupables.
+
+${SCHEMA}
+
+Réponds UNIQUEMENT par le JSON complet et valide.`;
+  const r=validate();
+  $("#pFix").value=`Voici une murder party au format JSON et les problèmes détectés par un contrôle automatique. Corrige-les en changeant le moins possible l’histoire.
+
+PROBLÈMES :
+${r.err.map(x=>"[ERREUR] "+x.m).concat(r.warn.map(x=>"[ALERTE] "+x.m)).join("\n")||"(aucun problème structurel : relis la cohérence narrative)"}
+
+${SCHEMA}
+
+Réponds UNIQUEMENT par le JSON complet corrigé.
+
+SCÉNARIO :
+${JSON.stringify(S)}`;}
+function copyText(txt,msg,ta){const ok=()=>{msg.className="msg ok";msg.textContent="Copié.";setTimeout(()=>msg.textContent="",2200);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(()=>{if(ta){ta.focus();ta.select();}msg.className="msg";msg.textContent="Texte sélectionné : fais Copier.";});else if(ta){ta.focus();ta.select();}}
+$$("[data-copy]").forEach(b=>b.addEventListener("click",()=>{renderPrompts();const ta=$("#"+b.dataset.copy);copyText(ta.value,$('[data-for="'+b.dataset.copy+'"]'),ta);}));
+$("#copyFix").addEventListener("click",()=>{renderPrompts();copyText($("#pFix").value,$("#fixMsg"),$("#pFix"));});
+
+function setMsg(t,ok){const m=$("#jsonMsg");m.className="msg "+(ok?"ok":"err");m.textContent=t;}
+function applyText(txt){let t=txt.trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),z=t.lastIndexOf("}");if(a>=0&&z>a)t=t.slice(a,z+1);
+  try{const o=JSON.parse(t);if(!o.personnages||!o.evenements)throw new Error("il manque « personnages » ou « evenements »");
+    ["lieux","indices","conclusions","fausses_pistes","deroule","relances","regles"].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});o.meta=o.meta||{};o.verite=o.verite||{};o.bulletin=o.bulletin||{questions:[],bareme:""};
+    S=o;imported=true;changed();const r=validate();setMsg("Scénario importé : "+r.err.length+" erreur(s), "+r.warn.length+" alerte(s).",!r.err.length);}
+  catch(e){setMsg("JSON illisible : "+e.message+". Vérifie que la réponse est entière.",false);}}
+$("#applyJson").addEventListener("click",()=>applyText($("#json").value));
+$("#copyJson").addEventListener("click",()=>copyText(JSON.stringify(S,null,2),$("#jsonMsg"),$("#json")));
+$("#fileIn").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>applyText(String(r.result));r.readAsText(f);e.target.value="";});
+$("#resetGen").addEventListener("click",()=>{imported=false;regen();changed();setMsg("Retour au scénario généré.",true);});
+
+let tab="p-gen";
+function show(id){tab=id;$$("[data-panel]").forEach(p=>p.hidden=p.id!==id);$$(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===id));
+  if(id==="p-kit")renderKit();if(id==="p-ia")renderPrompts();if(id==="p-data")$("#json").value=JSON.stringify(S,null,2);if(id==="p-perso")renderPerso();if(id==="p-check")renderCheck();
+  try{localStorage.setItem(KEY+"_tab",id);}catch(e){}}
+$$(".tabs button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)));
+$$("#kitNav button").forEach(b=>b.addEventListener("click",()=>{kitView=b.dataset.k;$$("#kitNav button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderKit();}));
+$("#printBtn").addEventListener("click",()=>{try{window.print();}catch(e){}});
+let tmr=null;
+function changed(){save();reindex();$("#scnTitle").textContent=cap(T(S.meta.titre||""))+(imported?" (importé)":"");nbHint();renderSpoil();clearTimeout(tmr);
+  tmr=setTimeout(()=>{renderCheck();if(tab==="p-kit")renderKit();if(tab==="p-data")$("#json").value=JSON.stringify(S,null,2);},120);}
+fillGenForm();if(!imported)regen();changed();
+try{const t=localStorage.getItem(KEY+"_tab");if(t&&document.getElementById(t))show(t);}catch(e){}
+window.__mmp={validate,setG:o=>{Object.assign(G,o);imported=false;regen();return validate();},applyU:k=>{applyUnivers(G,k);},applyI:k=>{applyIncident(G,k);},get S(){return S;}};
+})();
+</script>
